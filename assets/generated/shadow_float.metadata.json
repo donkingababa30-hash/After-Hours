@@ -1,0 +1,58 @@
+{
+	"animation_name": "floating_and_drifting_with_wispy_smoke_swirling",
+	"animation_style": "",
+	"animation_type": "floating and drifting with wispy smoke swirling",
+	"columns": 6,
+	"directions": [],
+	"frame_count": 6,
+	"frame_height": 56,
+	"frame_paths": [],
+	"frame_regions": [
+		{
+			"h": 56,
+			"w": 40,
+			"x": 0,
+			"y": 0
+		},
+		{
+			"h": 56,
+			"w": 40,
+			"x": 40,
+			"y": 0
+		},
+		{
+			"h": 56,
+			"w": 40,
+			"x": 80,
+			"y": 0
+		},
+		{
+			"h": 56,
+			"w": 40,
+			"x": 120,
+			"y": 0
+		},
+		{
+			"h": 56,
+			"w": 40,
+			"x": 160,
+			"y": 0
+		},
+		{
+			"h": 56,
+			"w": 40,
+			"x": 200,
+			"y": 0
+		}
+	],
+	"frame_width": 40,
+	"name": "shadow_float",
+	"prompt": "floating and drifting with wispy smoke swirling",
+	"rows": 1,
+	"source_image": "res://assets/generated/shadow_entity.png",
+	"source_tool": "animate_sprite",
+	"spritesheet_height": 56,
+	"spritesheet_path": "res://assets/generated/shadow_float.png",
+	"spritesheet_width": 240,
+	"type": "animation"
+}

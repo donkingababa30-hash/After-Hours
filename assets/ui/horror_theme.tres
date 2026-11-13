@@ -1,0 +1,125 @@
+[gd_resource type="Theme" format=3]
+
+[ext_resource type="FontFile" path="res://assets/ui/fonts/VT323-Regular.ttf" id="1_pi7gd"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_t2rpc"]
+content_margin_left = 12.0
+content_margin_top = 5.0
+content_margin_right = 12.0
+content_margin_bottom = 5.0
+bg_color = Color(0.04, 0.04, 0.05, 0.7)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.18, 0.18, 0.2, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_gc2mj"]
+draw_center = false
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.85, 0.78, 0.5, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_idyvq"]
+content_margin_left = 12.0
+content_margin_top = 5.0
+content_margin_right = 12.0
+content_margin_bottom = 5.0
+bg_color = Color(0.12, 0.13, 0.185, 0.96)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.93, 0.82, 0.47, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_jkx3f"]
+content_margin_left = 12.0
+content_margin_top = 5.0
+content_margin_right = 12.0
+content_margin_bottom = 5.0
+bg_color = Color(0.07, 0.08, 0.115, 0.92)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.28, 0.33, 0.42, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pcw2l"]
+content_margin_left = 12.0
+content_margin_top = 5.0
+content_margin_right = 12.0
+content_margin_bottom = 5.0
+bg_color = Color(0.04, 0.045, 0.07, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.93, 0.82, 0.47, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_6o121"]
+content_margin_left = 12.0
+content_margin_top = 5.0
+content_margin_right = 12.0
+content_margin_bottom = 5.0
+bg_color = Color(0.93, 0.82, 0.47, 1)
+border_color = Color(0.93, 0.82, 0.47, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_0thtr"]
+content_margin_left = 12.0
+content_margin_top = 5.0
+content_margin_right = 12.0
+content_margin_bottom = 5.0
+bg_color = Color(1, 0.95, 0.72, 1)
+border_color = Color(0.93, 0.82, 0.47, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_4u6hw"]
+content_margin_left = 12.0
+content_margin_top = 5.0
+content_margin_right = 12.0
+content_margin_bottom = 5.0
+bg_color = Color(0.1, 0.11, 0.15, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.28, 0.33, 0.42, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_e0dtf"]
+content_margin_left = 12.0
+content_margin_top = 5.0
+content_margin_right = 12.0
+content_margin_bottom = 5.0
+bg_color = Color(0.045, 0.055, 0.08, 0.94)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.28, 0.33, 0.42, 1)
+
+[resource]
+default_font = ExtResource("1_pi7gd")
+default_font_size = 18
+Button/colors/font_color = Color(0.86, 0.88, 0.92, 1)
+Button/colors/font_disabled_color = Color(0.5, 0.55, 0.63, 1)
+Button/colors/font_focus_color = Color(1, 1, 1, 1)
+Button/colors/font_hover_color = Color(0.93, 0.82, 0.47, 1)
+Button/colors/font_pressed_color = Color(0.93, 0.82, 0.47, 1)
+Button/font_sizes/font_size = 18
+Button/styles/disabled = SubResource("StyleBoxFlat_t2rpc")
+Button/styles/focus = SubResource("StyleBoxFlat_gc2mj")
+Button/styles/hover = SubResource("StyleBoxFlat_idyvq")
+Button/styles/normal = SubResource("StyleBoxFlat_jkx3f")
+Button/styles/pressed = SubResource("StyleBoxFlat_pcw2l")
+CheckBox/colors/font_color = Color(0.86, 0.88, 0.92, 1)
+CheckBox/colors/font_hover_color = Color(0.93, 0.82, 0.47, 1)
+CheckBox/colors/font_pressed_color = Color(0.93, 0.82, 0.47, 1)
+CheckBox/font_sizes/font_size = 18
+HSlider/styles/grabber_area = SubResource("StyleBoxFlat_6o121")
+HSlider/styles/grabber_area_highlight = SubResource("StyleBoxFlat_0thtr")
+HSlider/styles/slider = SubResource("StyleBoxFlat_4u6hw")
+Label/colors/font_color = Color(0.86, 0.88, 0.92, 1)
+Label/colors/font_outline_color = Color(0, 0, 0, 1)
+Label/constants/outline_size = 4
+Panel/styles/panel = SubResource("StyleBoxFlat_e0dtf")

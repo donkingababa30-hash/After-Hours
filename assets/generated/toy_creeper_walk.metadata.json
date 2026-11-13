@@ -1,0 +1,46 @@
+{
+	"animation_name": "scuttling_forward_on_tiny_feet_rocking_side_to_side",
+	"animation_style": "",
+	"animation_type": "scuttling forward on tiny feet, rocking side to side",
+	"columns": 4,
+	"directions": [],
+	"frame_count": 4,
+	"frame_height": 32,
+	"frame_paths": [],
+	"frame_regions": [
+		{
+			"h": 32,
+			"w": 28,
+			"x": 0,
+			"y": 0
+		},
+		{
+			"h": 32,
+			"w": 28,
+			"x": 28,
+			"y": 0
+		},
+		{
+			"h": 32,
+			"w": 28,
+			"x": 56,
+			"y": 0
+		},
+		{
+			"h": 32,
+			"w": 28,
+			"x": 84,
+			"y": 0
+		}
+	],
+	"frame_width": 28,
+	"name": "toy_creeper_walk",
+	"prompt": "scuttling forward on tiny feet, rocking side to side",
+	"rows": 1,
+	"source_image": "res://assets/generated/toy_creeper.png",
+	"source_tool": "animate_sprite",
+	"spritesheet_height": 32,
+	"spritesheet_path": "res://assets/generated/toy_creeper_walk.png",
+	"spritesheet_width": 112,
+	"type": "animation"
+}

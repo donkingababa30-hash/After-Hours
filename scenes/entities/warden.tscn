@@ -1,0 +1,57 @@
+[gd_scene format=3 uid="uid://bxstgauewj046"]
+
+[ext_resource type="Script" uid="uid://c5myh345os6j" path="res://scripts/entities/warden.gd" id="1_warden"]
+[ext_resource type="Texture2D" uid="uid://djjbp6ul7mwut" path="res://assets/generated/warden_walk.png" id="2_s6mpe"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_b5ffc"]
+atlas = ExtResource("2_s6mpe")
+region = Rect2(0, 0, 30, 40)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_plvfy"]
+atlas = ExtResource("2_s6mpe")
+region = Rect2(30, 0, 30, 40)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_urpwq"]
+atlas = ExtResource("2_s6mpe")
+region = Rect2(60, 0, 30, 40)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_dijhl"]
+atlas = ExtResource("2_s6mpe")
+region = Rect2(90, 0, 30, 40)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_1w622"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_b5ffc")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_plvfy")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_urpwq")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_dijhl")
+}],
+"loop": 1,
+"name": &"walk",
+"speed": 5.0
+}]
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_warden"]
+radius = 9.0
+height = 20.0
+
+[node name="Warden" type="CharacterBody2D" unique_id=709104343]
+collision_layer = 8
+script = ExtResource("1_warden")
+
+[node name="Sprite" type="AnimatedSprite2D" parent="." unique_id=135244795]
+sprite_frames = SubResource("SpriteFrames_1w622")
+animation = &"walk"
+autoplay = "walk"
+
+[node name="Shape" type="CollisionShape2D" parent="." unique_id=1495385520]
+position = Vector2(0, 6)
+shape = SubResource("CapsuleShape2D_warden")

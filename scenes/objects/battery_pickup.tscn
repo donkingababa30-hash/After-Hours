@@ -1,0 +1,24 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/objects/battery_pickup.gd" id="1_batt"]
+[ext_resource type="Texture2D" path="res://assets/generated/prop_battery.png" id="2_batt"]
+[ext_resource type="Texture2D" path="res://assets/generated/light_glow.png" id="3_glow"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_batt"]
+radius = 23.0
+
+[node name="BatteryPickup" type="Area2D"]
+script = ExtResource("1_batt")
+
+[node name="Glow" type="PointLight2D" parent="."]
+texture_filter = 2
+energy = 0.45
+texture = ExtResource("3_glow")
+texture_scale = 0.34
+color = Color(0.85, 0.9, 0.55, 1)
+
+[node name="Sprite" type="Sprite2D" parent="."]
+texture = ExtResource("2_batt")
+
+[node name="Shape" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_batt")

@@ -1,0 +1,85 @@
+[gd_scene format=3 uid="uid://g0f05q2brq8o"]
+
+[ext_resource type="Script" uid="uid://d2bkgmu75k6jr" path="res://scripts/mall.gd" id="1_mall"]
+[ext_resource type="Texture2D" uid="uid://dfp3o2345deey" path="res://assets/generated/floor_corridor_2.png" id="2_e1k6x"]
+[ext_resource type="PackedScene" uid="uid://b1h25go1sm24a" path="res://scenes/player/player.tscn" id="2_player"]
+[ext_resource type="Texture2D" uid="uid://bnd7w4u2qxu0p" path="res://assets/generated/carpet_red.png" id="3_ax0jo"]
+[ext_resource type="Texture2D" uid="uid://c1v1oevn01wbk" path="res://assets/generated/store_carpet.png" id="3_e1k6x"]
+[ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="3_hud"]
+[ext_resource type="PackedScene" path="res://scenes/main/pause_menu.tscn" id="4_pause"]
+[ext_resource type="Texture2D" uid="uid://njtkj88tpmg2" path="res://assets/generated/floor_concrete.png" id="4_pk0qv"]
+[ext_resource type="PackedScene" path="res://scenes/ui/camera_interface.tscn" id="5_cam"]
+[ext_resource type="Texture2D" uid="uid://bad5nv08gjx2" path="res://assets/generated/wall_panel_2.png" id="6_e1k6x"]
+[ext_resource type="Script" uid="uid://bvbw4g66habv1" path="res://scripts/encounter_manager.gd" id="6_encounter"]
+[ext_resource type="PackedScene" path="res://scenes/ui/map_screen.tscn" id="11_map"]
+[ext_resource type="PackedScene" path="res://scenes/ui/tutorial.tscn" id="12_tut"]
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_2w8dr"]
+texture = ExtResource("2_e1k6x")
+texture_region_size = Vector2i(32, 32)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_oo4kj"]
+texture = ExtResource("3_ax0jo")
+texture_region_size = Vector2i(32, 32)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_guaac"]
+texture = ExtResource("3_e1k6x")
+texture_region_size = Vector2i(32, 32)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_gq6sb"]
+texture = ExtResource("4_pk0qv")
+texture_region_size = Vector2i(32, 32)
+0:0/0 = 0
+
+[sub_resource type="TileSet" id="TileSet_ax0jo"]
+tile_size = Vector2i(32, 32)
+sources/0 = SubResource("TileSetAtlasSource_2w8dr")
+sources/1 = SubResource("TileSetAtlasSource_oo4kj")
+sources/3 = SubResource("TileSetAtlasSource_gq6sb")
+sources/2 = SubResource("TileSetAtlasSource_guaac")
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_e1k6x"]
+texture = ExtResource("6_e1k6x")
+texture_region_size = Vector2i(32, 32)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-16, -16, 16, -16, 16, 16, -16, 16)
+
+[sub_resource type="TileSet" id="TileSet_oo4kj"]
+tile_size = Vector2i(32, 32)
+physics_layer_0/collision_layer = 1
+sources/0 = SubResource("TileSetAtlasSource_e1k6x")
+
+[node name="Mall" type="Node2D" unique_id=360117581]
+script = ExtResource("1_mall")
+
+[node name="CanvasModulate" type="CanvasModulate" parent="." unique_id=712759865]
+color = Color(0.17, 0.2, 0.29, 1)
+
+[node name="Floor" type="TileMapLayer" parent="." unique_id=938809717]
+tile_set = SubResource("TileSet_ax0jo")
+
+[node name="Walls" type="TileMapLayer" parent="." unique_id=1532445158]
+tile_set = SubResource("TileSet_oo4kj")
+
+[node name="Objects" type="Node2D" parent="." unique_id=632023722]
+
+[node name="Entities" type="Node2D" parent="." unique_id=573548933]
+
+[node name="Player" parent="." unique_id=318612635 instance=ExtResource("2_player")]
+position = Vector2(1040, 1696)
+
+[node name="HUD" parent="." unique_id=477108615 instance=ExtResource("3_hud")]
+
+[node name="CameraInterface" parent="." unique_id=1759774943 instance=ExtResource("5_cam")]
+
+[node name="MapScreen" parent="." unique_id=1036119399 instance=ExtResource("11_map")]
+
+[node name="Tutorial" parent="." unique_id=1784177648 instance=ExtResource("12_tut")]
+
+[node name="PauseMenu" parent="." unique_id=1119264333 instance=ExtResource("4_pause")]
+
+[node name="EncounterManager" type="Node" parent="." unique_id=206488504]
+script = ExtResource("6_encounter")

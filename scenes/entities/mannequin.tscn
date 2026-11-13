@@ -1,0 +1,71 @@
+[gd_scene format=3 uid="uid://bq580l43q75ld"]
+
+[ext_resource type="Script" uid="uid://2hqhc2a35cv0" path="res://scripts/entities/mannequin.gd" id="1_mannequin"]
+[ext_resource type="Texture2D" uid="uid://bhgpmbwydpbaf" path="res://assets/generated/mannequin_creep.png" id="2_5k77b"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_37tin"]
+atlas = ExtResource("2_5k77b")
+region = Rect2(0, 0, 32, 48)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_bjv1m"]
+atlas = ExtResource("2_5k77b")
+region = Rect2(32, 0, 32, 48)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_oqs84"]
+atlas = ExtResource("2_5k77b")
+region = Rect2(64, 0, 32, 48)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_cbpsk"]
+atlas = ExtResource("2_5k77b")
+region = Rect2(96, 0, 32, 48)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_yif5o"]
+atlas = ExtResource("2_5k77b")
+region = Rect2(128, 0, 32, 48)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_f7r6g"]
+atlas = ExtResource("2_5k77b")
+region = Rect2(160, 0, 32, 48)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_m4i46"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_37tin")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_bjv1m")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_oqs84")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_cbpsk")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_yif5o")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_f7r6g")
+}],
+"loop": 1,
+"name": &"creep",
+"speed": 7.0
+}]
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_mannequin"]
+radius = 7.0
+height = 20.0
+
+[node name="Mannequin" type="CharacterBody2D" unique_id=313685230]
+collision_layer = 8
+script = ExtResource("1_mannequin")
+
+[node name="Sprite" type="AnimatedSprite2D" parent="." unique_id=262145214]
+sprite_frames = SubResource("SpriteFrames_m4i46")
+animation = &"creep"
+autoplay = "creep"
+
+[node name="Shape" type="CollisionShape2D" parent="." unique_id=1781097322]
+position = Vector2(0, 8)
+shape = SubResource("CapsuleShape2D_mannequin")

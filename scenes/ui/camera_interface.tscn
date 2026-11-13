@@ -1,0 +1,102 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/camera_interface.gd" id="1_cam"]
+[ext_resource type="Script" path="res://scripts/ui/cam_feed.gd" id="2_feed"]
+
+[node name="CameraInterface" type="CanvasLayer"]
+script = ExtResource("1_cam")
+
+[node name="Panel" type="Control" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Bg" type="ColorRect" parent="Panel"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.02, 0.02, 0.035, 0.97)
+
+[node name="FeedFrame" type="Control" parent="Panel"]
+offset_left = 96.0
+offset_top = 52.0
+offset_right = 544.0
+offset_bottom = 296.0
+mouse_filter = 2
+
+[node name="FeedContainer" type="SubViewportContainer" parent="Panel/FeedFrame"]
+mouse_filter = 2
+offset_right = 448.0
+offset_bottom = 244.0
+stretch = true
+
+[node name="FeedViewport" type="SubViewport" parent="Panel/FeedFrame/FeedContainer"]
+render_target_update_mode = 4
+
+[node name="FeedCamera" type="Camera2D" parent="Panel/FeedFrame/FeedContainer/FeedViewport"]
+
+[node name="Overlay" type="Control" parent="Panel/FeedFrame"]
+offset_right = 448.0
+offset_bottom = 244.0
+mouse_filter = 2
+script = ExtResource("2_feed")
+
+[node name="Title" type="Label" parent="Panel"]
+offset_left = 96.0
+offset_top = 24.0
+offset_right = 340.0
+offset_bottom = 48.0
+theme_override_colors/font_color = Color(0.8, 0.95, 1, 1)
+theme_override_font_sizes/font_size = 16
+text = "CAM 01"
+
+[node name="Location" type="Label" parent="Panel"]
+offset_left = 340.0
+offset_top = 24.0
+offset_right = 544.0
+offset_bottom = 48.0
+theme_override_colors/font_color = Color(0.7, 0.8, 0.9, 1)
+theme_override_font_sizes/font_size = 14
+text = "MAIN ATRIUM"
+horizontal_alignment = 2
+
+[node name="Rec" type="Label" parent="Panel"]
+offset_left = 96.0
+offset_top = 300.0
+offset_right = 160.0
+offset_bottom = 320.0
+theme_override_colors/font_color = Color(0.9, 0.2, 0.2, 1)
+theme_override_font_sizes/font_size = 12
+text = "● REC"
+
+[node name="Time" type="Label" parent="Panel"]
+offset_left = 444.0
+offset_top = 300.0
+offset_right = 544.0
+offset_bottom = 320.0
+theme_override_colors/font_color = Color(0.7, 0.8, 0.9, 1)
+theme_override_font_sizes/font_size = 12
+text = "10:00 PM"
+horizontal_alignment = 2
+
+[node name="PrevButton" type="Button" parent="Panel"]
+offset_left = 145.0
+offset_top = 324.0
+offset_right = 255.0
+offset_bottom = 350.0
+theme_override_font_sizes/font_size = 12
+text = "< PREV"
+
+[node name="NextButton" type="Button" parent="Panel"]
+offset_left = 265.0
+offset_top = 324.0
+offset_right = 375.0
+offset_bottom = 350.0
+theme_override_font_sizes/font_size = 12
+text = "NEXT >"
+
+[node name="ExitButton" type="Button" parent="Panel"]
+offset_left = 385.0
+offset_top = 324.0
+offset_right = 495.0
+offset_bottom = 350.0
+theme_override_font_sizes/font_size = 12
+text = "EXIT"

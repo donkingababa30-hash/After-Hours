@@ -1,0 +1,186 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/main_menu.gd" id="1_menu"]
+[ext_resource type="Texture2D" path="res://assets/generated/menu_bg.png" id="2_bg"]
+
+[node name="MainMenu" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_menu")
+
+[node name="Background" type="TextureRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+texture = ExtResource("2_bg")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="Darken" type="ColorRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.02, 0.02, 0.05, 0.5)
+
+[node name="Title" type="Label" parent="."]
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -300.0
+offset_top = 26.0
+offset_right = 300.0
+offset_bottom = 84.0
+theme_override_colors/font_color = Color(0.87, 0.82, 0.71, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 8
+theme_override_font_sizes/font_size = 48
+text = "AFTER HOURS"
+horizontal_alignment = 1
+
+[node name="Subtitle" type="Label" parent="."]
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -300.0
+offset_top = 86.0
+offset_right = 300.0
+offset_bottom = 108.0
+theme_override_colors/font_color = Color(0.65, 0.7, 0.8, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 13
+text = "RIVERVIEW MALL   —   NIGHT SHIFT"
+horizontal_alignment = 1
+
+[node name="Menu" type="VBoxContainer" parent="."]
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -105.0
+offset_top = -236.0
+offset_right = 105.0
+offset_bottom = -26.0
+theme_override_constants/separation = 8
+
+[node name="NewGameButton" type="Button" parent="Menu"]
+theme_override_font_sizes/font_size = 16
+text = "NEW GAME"
+
+[node name="ContinueButton" type="Button" parent="Menu"]
+theme_override_font_sizes/font_size = 16
+text = "CONTINUE"
+
+[node name="SaveNote" type="Label" parent="Menu"]
+theme_override_colors/font_color = Color(0.6, 0.65, 0.74, 1)
+theme_override_font_sizes/font_size = 11
+text = "NO SAVED SHIFT"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="TutorialButton" type="Button" parent="Menu"]
+theme_override_font_sizes/font_size = 16
+text = "REPLAY ORIENTATION"
+
+[node name="SettingsButton" type="Button" parent="Menu"]
+theme_override_font_sizes/font_size = 16
+text = "SETTINGS"
+
+[node name="ExitButton" type="Button" parent="Menu"]
+theme_override_font_sizes/font_size = 16
+text = "QUIT"
+
+[node name="SettingsPanel" type="Panel" parent="."]
+visible = false
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -150.0
+offset_top = -95.0
+offset_right = 150.0
+offset_bottom = 95.0
+
+[node name="Title" type="Label" parent="SettingsPanel"]
+offset_left = 16.0
+offset_top = 12.0
+offset_right = 284.0
+offset_bottom = 38.0
+theme_override_font_sizes/font_size = 20
+text = "SETTINGS"
+
+[node name="Fullscreen" type="CheckBox" parent="SettingsPanel"]
+offset_left = 16.0
+offset_top = 50.0
+offset_right = 200.0
+offset_bottom = 76.0
+theme_override_font_sizes/font_size = 14
+text = "Fullscreen"
+
+[node name="VolumeLabel" type="Label" parent="SettingsPanel"]
+offset_left = 16.0
+offset_top = 84.0
+offset_right = 284.0
+offset_bottom = 106.0
+theme_override_font_sizes/font_size = 14
+text = "Master volume"
+
+[node name="Volume" type="HSlider" parent="SettingsPanel"]
+offset_left = 16.0
+offset_top = 108.0
+offset_right = 284.0
+offset_bottom = 130.0
+max_value = 1.0
+step = 0.01
+value = 1.0
+
+[node name="Close" type="Button" parent="SettingsPanel"]
+offset_left = 100.0
+offset_top = 148.0
+offset_right = 200.0
+offset_bottom = 176.0
+theme_override_font_sizes/font_size = 14
+text = "CLOSE"
+
+[node name="ConfirmPanel" type="Panel" parent="."]
+visible = false
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -170.0
+offset_top = -70.0
+offset_right = 170.0
+offset_bottom = 70.0
+
+[node name="Title" type="Label" parent="ConfirmPanel"]
+offset_left = 16.0
+offset_top = 12.0
+offset_right = 324.0
+offset_bottom = 36.0
+theme_override_font_sizes/font_size = 16
+text = "REPLACE SAVED SHIFT?"
+horizontal_alignment = 1
+
+[node name="Body" type="Label" parent="ConfirmPanel"]
+offset_left = 16.0
+offset_top = 38.0
+offset_right = 324.0
+offset_bottom = 92.0
+theme_override_colors/font_color = Color(0.8, 0.8, 0.86, 1)
+theme_override_font_sizes/font_size = 12
+text = "Starting a new game erases your saved shift. This cannot be undone."
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="Confirm" type="Button" parent="ConfirmPanel"]
+offset_left = 30.0
+offset_top = 100.0
+offset_right = 158.0
+offset_bottom = 130.0
+theme_override_font_sizes/font_size = 14
+text = "ERASE AND START"
+
+[node name="Cancel" type="Button" parent="ConfirmPanel"]
+offset_left = 176.0
+offset_top = 100.0
+offset_right = 310.0
+offset_bottom = 130.0
+theme_override_font_sizes/font_size = 14
+text = "CANCEL"

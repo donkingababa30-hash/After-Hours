@@ -1,0 +1,21 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/sliding_door.gd" id="1_sd"]
+[ext_resource type="Texture2D" path="res://assets/generated/door_glass.png" id="2_glass"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_reach"]
+size = Vector2(148, 58)
+
+[node name="SlidingDoor" type="Area2D"]
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("1_sd")
+
+[node name="Reach" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_reach")
+
+[node name="Left" type="Sprite2D" parent="."]
+texture = ExtResource("2_glass")
+
+[node name="Right" type="Sprite2D" parent="."]
+texture = ExtResource("2_glass")

@@ -1,0 +1,23 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/objects/breaker.gd" id="1_breaker"]
+[ext_resource type="Texture2D" path="res://assets/generated/prop_breaker.png" id="2_tex"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_breaker"]
+size = Vector2(40, 34)
+
+[node name="BreakerPanel" type="Area2D"]
+script = ExtResource("1_breaker")
+
+[node name="Sprite" type="Sprite2D" parent="."]
+texture = ExtResource("2_tex")
+
+[node name="Shape" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_breaker")
+
+[node name="Blocker" type="StaticBody2D" parent="."]
+collision_layer = 1
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape2D" parent="Blocker"]
+shape = SubResource("RectangleShape2D_breaker")

@@ -1,0 +1,60 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/pause_menu.gd" id="1_pause"]
+
+[node name="PauseMenu" type="CanvasLayer"]
+layer = 20
+script = ExtResource("1_pause")
+
+[node name="Bg" type="ColorRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0, 0, 0, 0.72)
+
+[node name="Title" type="Label" parent="."]
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -200.0
+offset_top = 64.0
+offset_right = 200.0
+offset_bottom = 106.0
+theme_override_colors/font_color = Color(0.9, 0.86, 0.74, 1)
+theme_override_font_sizes/font_size = 32
+text = "PAUSED"
+horizontal_alignment = 1
+
+[node name="Menu" type="VBoxContainer" parent="."]
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -105.0
+offset_top = 112.0
+offset_right = 105.0
+offset_bottom = 348.0
+theme_override_constants/separation = 8
+
+[node name="ResumeButton" type="Button" parent="Menu"]
+theme_override_font_sizes/font_size = 16
+text = "RESUME"
+
+[node name="SaveButton" type="Button" parent="Menu"]
+theme_override_font_sizes/font_size = 16
+text = "SAVE SHIFT"
+
+[node name="SaveNote" type="Label" parent="Menu"]
+theme_override_colors/font_color = Color(0.65, 0.72, 0.8, 1)
+theme_override_font_sizes/font_size = 11
+text = "Autosaves when a task is completed."
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="RestartButton" type="Button" parent="Menu"]
+theme_override_font_sizes/font_size = 16
+text = "RESTART SHIFT"
+
+[node name="MenuButton" type="Button" parent="Menu"]
+theme_override_font_sizes/font_size = 16
+text = "MAIN MENU"
+
+[node name="ExitButton" type="Button" parent="Menu"]
+theme_override_font_sizes/font_size = 16
+text = "QUIT"

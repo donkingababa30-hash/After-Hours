@@ -1,0 +1,16 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/service_door.gd" id="1_sdoor"]
+[ext_resource type="Texture2D" path="res://assets/generated/door_service_open.png" id="2_open"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_sdoor"]
+size = Vector2(56, 32)
+
+[node name="ServiceDoor" type="Area2D"]
+script = ExtResource("1_sdoor")
+
+[node name="Sprite" type="Sprite2D" parent="."]
+texture = ExtResource("2_open")
+
+[node name="Shape" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_sdoor")

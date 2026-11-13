@@ -1,0 +1,21 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/objects/searchable.gd" id="1_search"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_search"]
+size = Vector2(46, 36)
+
+[node name="Searchable" type="Area2D"]
+script = ExtResource("1_search")
+
+[node name="Sprite" type="Sprite2D" parent="."]
+
+[node name="Shape" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_search")
+
+[node name="Blocker" type="StaticBody2D" parent="."]
+collision_layer = 1
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape2D" parent="Blocker"]
+shape = SubResource("RectangleShape2D_search")

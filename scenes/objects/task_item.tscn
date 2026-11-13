@@ -1,0 +1,16 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/objects/task_item.gd" id="1_task"]
+[ext_resource type="Texture2D" path="res://assets/generated/terminal.png" id="2_terminal"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_task"]
+radius = 20.0
+
+[node name="TaskItem" type="Area2D"]
+script = ExtResource("1_task")
+
+[node name="Sprite" type="Sprite2D" parent="."]
+texture = ExtResource("2_terminal")
+
+[node name="Shape" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_task")

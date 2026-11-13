@@ -1,0 +1,58 @@
+{
+	"animation_name": "walking_toward_the_viewer_cartoon_walk_cycle",
+	"animation_style": "",
+	"animation_type": "walking toward the viewer, cartoon walk cycle",
+	"columns": 6,
+	"directions": [],
+	"frame_count": 6,
+	"frame_height": 48,
+	"frame_paths": [],
+	"frame_regions": [
+		{
+			"h": 48,
+			"w": 32,
+			"x": 0,
+			"y": 0
+		},
+		{
+			"h": 48,
+			"w": 32,
+			"x": 32,
+			"y": 0
+		},
+		{
+			"h": 48,
+			"w": 32,
+			"x": 64,
+			"y": 0
+		},
+		{
+			"h": 48,
+			"w": 32,
+			"x": 96,
+			"y": 0
+		},
+		{
+			"h": 48,
+			"w": 32,
+			"x": 128,
+			"y": 0
+		},
+		{
+			"h": 48,
+			"w": 32,
+			"x": 160,
+			"y": 0
+		}
+	],
+	"frame_width": 32,
+	"name": "guard_walk_down",
+	"prompt": "walking toward the viewer, cartoon walk cycle",
+	"rows": 1,
+	"source_image": "res://assets/generated/guard_down.png",
+	"source_tool": "animate_sprite",
+	"spritesheet_height": 48,
+	"spritesheet_path": "res://assets/generated/guard_walk_down.png",
+	"spritesheet_width": 192,
+	"type": "animation"
+}

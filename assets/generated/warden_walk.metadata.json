@@ -1,0 +1,46 @@
+{
+	"animation_name": "walking_stiffly_forward_long_arms_swaying_head_lolling_side_to_side",
+	"animation_style": "",
+	"animation_type": "walking stiffly forward, long arms swaying, head lolling side to side",
+	"columns": 4,
+	"directions": [],
+	"frame_count": 4,
+	"frame_height": 40,
+	"frame_paths": [],
+	"frame_regions": [
+		{
+			"h": 40,
+			"w": 30,
+			"x": 0,
+			"y": 0
+		},
+		{
+			"h": 40,
+			"w": 30,
+			"x": 30,
+			"y": 0
+		},
+		{
+			"h": 40,
+			"w": 30,
+			"x": 60,
+			"y": 0
+		},
+		{
+			"h": 40,
+			"w": 30,
+			"x": 90,
+			"y": 0
+		}
+	],
+	"frame_width": 30,
+	"name": "warden_walk",
+	"prompt": "walking stiffly forward, long arms swaying, head lolling side to side",
+	"rows": 1,
+	"source_image": "res://assets/generated/warden.png",
+	"source_tool": "animate_sprite",
+	"spritesheet_height": 40,
+	"spritesheet_path": "res://assets/generated/warden_walk.png",
+	"spritesheet_width": 120,
+	"type": "animation"
+}

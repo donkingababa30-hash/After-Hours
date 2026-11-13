@@ -1,0 +1,57 @@
+[gd_scene format=3 uid="uid://bkkd7fyy8l2iy"]
+
+[ext_resource type="Script" uid="uid://tyjkmlenpay1" path="res://scripts/entities/haunted_toy.gd" id="1_toy"]
+[ext_resource type="Texture2D" uid="uid://dmg1cvoforx6v" path="res://assets/generated/toy_creeper_walk.png" id="2_uq1l1"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_s0v5e"]
+atlas = ExtResource("2_uq1l1")
+region = Rect2(0, 0, 28, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_lp7ly"]
+atlas = ExtResource("2_uq1l1")
+region = Rect2(28, 0, 28, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_hoye6"]
+atlas = ExtResource("2_uq1l1")
+region = Rect2(56, 0, 28, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_rbbj5"]
+atlas = ExtResource("2_uq1l1")
+region = Rect2(84, 0, 28, 32)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_fxmxy"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_s0v5e")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_lp7ly")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_hoye6")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_rbbj5")
+}],
+"loop": 1,
+"name": &"walk",
+"speed": 5.0
+}]
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_toy"]
+radius = 8.0
+height = 18.0
+
+[node name="HauntedToy" type="CharacterBody2D" unique_id=983995]
+collision_layer = 8
+script = ExtResource("1_toy")
+
+[node name="Sprite" type="AnimatedSprite2D" parent="." unique_id=762974541]
+sprite_frames = SubResource("SpriteFrames_fxmxy")
+animation = &"walk"
+autoplay = "walk"
+
+[node name="Shape" type="CollisionShape2D" parent="." unique_id=1224711232]
+position = Vector2(0, 6)
+shape = SubResource("CapsuleShape2D_toy")

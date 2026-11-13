@@ -1,0 +1,58 @@
+{
+	"animation_name": "stiff_jerky_creeping_forward_with_unsettling_twitches",
+	"animation_style": "",
+	"animation_type": "stiff jerky creeping forward with unsettling twitches",
+	"columns": 6,
+	"directions": [],
+	"frame_count": 6,
+	"frame_height": 48,
+	"frame_paths": [],
+	"frame_regions": [
+		{
+			"h": 48,
+			"w": 32,
+			"x": 0,
+			"y": 0
+		},
+		{
+			"h": 48,
+			"w": 32,
+			"x": 32,
+			"y": 0
+		},
+		{
+			"h": 48,
+			"w": 32,
+			"x": 64,
+			"y": 0
+		},
+		{
+			"h": 48,
+			"w": 32,
+			"x": 96,
+			"y": 0
+		},
+		{
+			"h": 48,
+			"w": 32,
+			"x": 128,
+			"y": 0
+		},
+		{
+			"h": 48,
+			"w": 32,
+			"x": 160,
+			"y": 0
+		}
+	],
+	"frame_width": 32,
+	"name": "mannequin_creep",
+	"prompt": "stiff jerky creeping forward with unsettling twitches",
+	"rows": 1,
+	"source_image": "res://assets/generated/mannequin.png",
+	"source_tool": "animate_sprite",
+	"spritesheet_height": 48,
+	"spritesheet_path": "res://assets/generated/mannequin_creep.png",
+	"spritesheet_width": 192,
+	"type": "animation"
+}
