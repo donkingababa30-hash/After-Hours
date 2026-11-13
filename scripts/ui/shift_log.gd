@@ -3,7 +3,11 @@ extends Control
 ## plus the objective and where it is, so they are never left wandering.
 
 @onready var summary: Label = $Panel/Summary
-@onready var entries: Label = $Panel/Entries
+# The entries live inside a ScrollContainer. As a bare Label with a fixed rect the
+# text simply drew past the panel - entries ran off the bottom of the screen and
+# were unreadable. The box clips them and lets the wheel reach the older ones.
+@onready var entries_box: ScrollContainer = $Panel/EntriesBox
+@onready var entries: Label = $Panel/EntriesBox/Entries
 
 var _open := false
 var _player: Player = null
@@ -49,6 +53,9 @@ func open() -> void:
 	if _player != null:
 		_player.can_move = false
 	_refresh()
+	# Newest entries are first, so the top of the list is where the guard wants to
+	# start. Coming back to a log left scrolled to the bottom would look empty.
+	entries_box.scroll_vertical = 0
 
 
 func close() -> void:

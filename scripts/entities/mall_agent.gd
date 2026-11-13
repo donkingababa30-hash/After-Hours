@@ -16,12 +16,23 @@ enum State { PATROL, CHASE, ATTACK, HELD }
 @export var catch_distance := 26.0
 @export var sense_distance := 320.0
 @export var repath_interval := 0.35
+## Seconds a hunter keeps walking toward the last place it had the guard in view.
+##
+## Without this, breaking line of sight switched a chase off like a light switch.
+## With it, rounding a corner or stepping into a shop buys seconds rather than an
+## instant escape - which is what makes the mall's layout a tool the player can
+## actually use.
+@export var memory_seconds := 6.0
 
 var state: State = State.PATROL
 var active := false
 var target: Player = null
 var patrol_points: Array[Vector2] = []
 var patrol_index := 0
+
+## Where the guard was last seen or heard, and how long that memory has left.
+var _last_seen := Vector2.ZERO
+var _last_seen_t := 0.0
 
 var _mall: Node2D = null
 var _path := PackedVector2Array()
@@ -82,6 +93,9 @@ func _physics_process(delta: float) -> void:
 	if _noise_t > 0.0:
 		_noise_t -= delta
 
+	if _last_seen_t > 0.0:
+		_last_seen_t -= delta
+
 	_think(delta)
 
 	if state == State.HELD:
@@ -127,6 +141,14 @@ func hear_noise(at: Vector2, duration: float = 6.0) -> void:
 func _destination() -> Vector2:
 	if _noise_t > 0.0:
 		return _noise_point
+	# Losing sight of the guard does not erase them. The hunter walks to where it
+	# last had them and then gives up, so a chase has a readable end that the
+	# player caused rather than one that just happens.
+	#
+	# Skipped while HELD: that state means the agent is deliberately giving ground
+	# (the mannequin backing away from the beam) and its own goal must win.
+	if _last_seen_t > 0.0 and state != State.HELD:
+		return _last_seen
 	return _goal()
 
 ## Decide the next state from the world. Called every physics frame.
@@ -152,11 +174,10 @@ func _speed_for_state() -> float:
 # --- movement -------------------------------------------------------------
 
 func _walk_path_to(goal: Vector2) -> void:
-	if _mall == null or not is_instance_valid(_mall):
-		_mall = get_tree().get_first_node_in_group("mall") as Node2D
+	var mall := _mall_ref()
 	var found := PackedVector2Array()
-	if _mall != null and _mall.has_method("find_path"):
-		found = _mall.call("find_path", global_position, goal)
+	if mall != null and mall.has_method("find_path"):
+		found = mall.call("find_path", global_position, goal)
 	if found.size() < 2:
 		# No route (or the goal sits in a wall): head straight at it and let the
 		# next repath pick up a proper route once the way opens up.
@@ -182,7 +203,41 @@ func _follow_path(speed: float, _delta: float) -> void:
 func _can_sense() -> bool:
 	if target == null or not is_instance_valid(target):
 		return false
-	return global_position.distance_to(target.global_position) <= sense_distance
+	if global_position.distance_to(target.global_position) > sense_distance:
+		return false
+	# SIGHT, not just proximity. Detection used to be pure distance, so a hunter
+	# locked on through solid walls and there was no way to break a chase except
+	# outrunning it - which made every encounter feel arbitrary.
+	return has_line_of_sight(target.global_position)
+
+
+## Called by a subclass the moment it has the guard in view or in earshot.
+func note_contact(at: Vector2) -> void:
+	_last_seen = at
+	_last_seen_t = memory_seconds
+
+
+## True when nothing solid stands between the agent and `to`. Samples the same
+## grid the A* pathing uses, so a wall, a shop front, or the block of shelving in
+## the middle of a store all break the line.
+func has_line_of_sight(to: Vector2) -> bool:
+	var mall := _mall_ref()
+	if mall == null or not mall.has_method("blocks_sight"):
+		return true
+	var span := to - global_position
+	var steps := maxi(2, int(span.length() / 20.0))
+	for i in range(1, steps):
+		if bool(mall.call("blocks_sight", global_position + span * (float(i) / float(steps)))):
+			return false
+	return true
+
+
+## The mall, looked up lazily: agents are built before they enter the tree, so
+## the group lookup cannot happen in _ready().
+func _mall_ref() -> Node2D:
+	if _mall == null or not is_instance_valid(_mall):
+		_mall = get_tree().get_first_node_in_group("mall") as Node2D
+	return _mall
 
 
 func _patrol_goal() -> Vector2:
@@ -202,4 +257,9 @@ func in_beam(half_angle: float, beam_range: float) -> bool:
 		return true
 	if distance > beam_range:
 		return false
-	return absf(target.facing.normalized().angle_to(to_self.normalized())) < half_angle
+	if absf(target.facing.normalized().angle_to(to_self.normalized())) >= half_angle:
+		return false
+	# A wall stops the beam as surely as it stops the eye. Without this, shining
+	# the torch at a shop front froze whatever was standing behind it, and a
+	# mannequin on the far side of a wall counted as "held off".
+	return has_line_of_sight(target.global_position)

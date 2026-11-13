@@ -17,6 +17,7 @@ signal shaken_off
 
 const SFX_WHISPER := preload("res://assets/generated/audio/warden_whisper.mp3")
 const SFX_STING := preload("res://assets/generated/audio/sting.mp3")
+const SFX_STEP := preload("res://assets/generated/audio/footstep.mp3")
 
 ## How long it can ride the guard before it finishes the job.
 const LATCH_LIMIT := 13.0
@@ -32,6 +33,10 @@ var latched := false
 
 var _latch_t := 0.0
 var _whisper_t := 0.0
+## Cadence of its footfalls. Their volume is the guard's only way to judge how
+## close it is, and hearing is the whole of its hunting method - so the tell has
+## to be steady and readable rather than decorative.
+var _step_t := 0.5
 ## Set when it is driven off: it backs away and gives the guard a few seconds.
 var _stagger := 0.0
 
@@ -58,9 +63,26 @@ func _think(delta: float) -> void:
 	if heard or _can_sense():
 		set_state(State.CHASE)
 		_tint(Color(0.78, 0.86, 1.0))
+		if target != null:
+			# Its memory is set by sound as well as sight: it walks to where it
+			# last HEARD the guard, not to where the guard is. Standing still
+			# therefore does not just stop it closing - it makes the Warden lose
+			# the trail, which is the whole counter.
+			note_contact(target.global_position)
 	else:
 		set_state(State.PATROL)
 		_tint(Color(0.6, 0.66, 0.8))
+
+	# A heavy footfall whose volume says how near it is. Hearing it is how the
+	# guard decides to stand still - so it has to arrive before the catch, not
+	# with it.
+	_step_t -= delta
+	if _step_t <= 0.0:
+		_step_t = 0.5 if state == State.CHASE else 0.72
+		var dist := 800.0
+		if target != null and is_instance_valid(target):
+			dist = global_position.distance_to(target.global_position)
+		ZivaSfx.play(self, SFX_STEP, 0.35, lerpf(-5.0, -27.0, clampf(dist / 800.0, 0.0, 1.0)))
 
 
 ## A catch is not a kill: it grabs hold instead.
@@ -110,6 +132,14 @@ func release() -> void:
 	_stagger = 5.0
 	set_state(State.PATROL)
 	shaken_off.emit()
+
+
+## How far through the latch it is, in seconds, so the HUD can count down. A
+## countdown is the difference between "I am going to die and I do not know when"
+## and "I have nine seconds to reach the office" - and only the second one is a
+## decision the player can make.
+func latch_progress() -> float:
+	return _latch_t
 
 
 func _tint(colour: Color) -> void:

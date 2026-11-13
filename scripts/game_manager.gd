@@ -47,6 +47,19 @@ var objective_point := Vector2.ZERO
 ## used to overwrite the objective outright, which read as "my task just vanished
 ## and now it is telling me about a room I am not in".
 var objective_warning := ""
+## The board's second line: WHERE the job is, in words.
+##
+## The instruction on its own ("Seal the service door") does not tell the guard
+## which part of the mall to walk to, and the room name on its own does not tell
+## them what to do when they get there. Both are shown, on separate lines, so the
+## board answers "what do I do" and "where do I go" without a run-on sentence.
+var objective_where := ""
+## The board's third line: the deadline, already formatted, or "" for no clock.
+var objective_deadline := ""
+## Progress through tonight's duty list, drawn as "3 / 9". Zero means the job is
+## not part of a numbered list (an incident, the finale) and no counter is shown.
+var objective_step := 0
+var objective_steps := 0
 ## Rounds the guard let expire this night. Three and they are relieved of duty.
 var missed_rounds := 0
 var tutorial_done := false
@@ -147,7 +160,14 @@ func skip_to_hour(hour_24: int) -> void:
 
 ## Adds a timestamped line to the shift log. Newest entries are first.
 func add_log_entry(text: String) -> void:
-	log_entries.push_front("%s   %s" % [time_text(), text])
+	var line := "%s   %s" % [time_text(), text]
+	# Loading a save re-runs the current duty's setup, which re-logs its opening
+	# line - so the shift log showed the same duty twice, at the same minute.
+	# Dropping a line identical to the newest one keeps the log honest without
+	# silencing anything that genuinely happens twice at different times.
+	if not log_entries.is_empty() and log_entries[0] == line:
+		return
+	log_entries.push_front(line)
 	if log_entries.size() > 60:
 		log_entries.resize(60)
 	log_updated.emit()
@@ -170,12 +190,29 @@ func has_flag(flag_name: String) -> bool:
 ## `point` overrides the room centre for the waypoint arrow. Some objectives are
 ## a thing standing in a corridor rather than a room, and pointing at the room
 ## they are nominally "in" sends the guard the wrong way.
-func set_objective(text: String, room: String = "", point: Vector2 = Vector2.ZERO) -> void:
-	if current_objective == text and objective_room == room and objective_point == point:
+##
+## `where` and `deadline` are the board's location and clock lines; `step`/`steps`
+## are the position in tonight's duty list. They default to empty so every older
+## caller keeps working and simply shows a one-line board.
+func set_objective(text: String, room: String = "", point: Vector2 = Vector2.ZERO,
+		where: String = "", deadline: String = "", step: int = 0, steps: int = 0) -> void:
+	# A blank objective is never useful - it leaves the board showing a header, an
+	# evidence count and nothing to actually do. Refusing it means a caller with
+	# nothing to say keeps the last real instruction rather than wiping the board,
+	# which is what produced the empty "OBJECTIVE" panel this was reported for.
+	if text.strip_edges() == "":
+		return
+	if current_objective == text and objective_room == room and objective_point == point \
+			and objective_where == where and objective_deadline == deadline \
+			and objective_step == step and objective_steps == steps:
 		return
 	current_objective = text
 	objective_room = room
 	objective_point = point
+	objective_where = where
+	objective_deadline = deadline
+	objective_step = step
+	objective_steps = steps
 	objective_changed.emit(text)
 
 
@@ -216,6 +253,10 @@ func start_night(night_number: int = -1) -> void:
 	objective_room = ""
 	objective_point = Vector2.ZERO
 	objective_warning = ""
+	objective_where = ""
+	objective_deadline = ""
+	objective_step = 0
+	objective_steps = 0
 	log_updated.emit()
 	_last_hour = current_hour()
 	clock_changed.emit(time_text())

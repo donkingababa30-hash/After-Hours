@@ -103,6 +103,12 @@ func _physics_process(delta: float) -> void:
 		facing = to_mouse.normalized()
 
 	_beam_t += delta
+	# Re-pick the interactable every frame, not only when an Area2D enters or
+	# leaves. Objects change what they offer while the guard is standing next to
+	# them - the service door's control panel drops its priority the moment it is
+	# rerouted, so the door beside it can be used - and without this the guard was
+	# left holding a stale target and pressing E at a panel that was already done.
+	_refresh_target()
 	_update_animation(dir, delta)
 	_update_flashlight(delta)
 	_update_battery(delta)

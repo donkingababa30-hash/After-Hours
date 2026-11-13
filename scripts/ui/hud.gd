@@ -5,9 +5,12 @@ extends CanvasLayer
 @onready var clock_label: Label = $Clock
 @onready var objective_label: Label = $ObjectivePanel/ObjectiveText
 @onready var objective_marker: Control = $ObjectivePanel/Marker
-@onready var anomalies_label: Label = $ObjectivePanel/Anomalies
-@onready var flash_label: Label = $Flashlight
-@onready var battery_label: Label = $Battery
+@onready var objective_where: Label = $ObjectivePanel/ObjectiveWhere
+@onready var objective_deadline: Label = $ObjectivePanel/ObjectiveDeadline
+@onready var objective_progress: Label = $ObjectivePanel/Progress
+@onready var anomalies_label: Label = $StatusPanel/Anomalies
+@onready var flash_label: Label = $StatusPanel/Flashlight
+@onready var battery_label: Label = $StatusPanel/Battery
 @onready var prompt_label: Label = $Prompt
 @onready var location_label: Label = $Location
 @onready var message_label: Label = $Message
@@ -16,8 +19,8 @@ extends CanvasLayer
 @onready var waypoint: Control = $Waypoint
 @onready var vignette: ColorRect = $Vignette
 @onready var vitals: Control = $Vitals
-@onready var flares_label: Label = $Flares
-@onready var night_label: Label = $Night
+@onready var flares_label: Label = $StatusPanel/Flares
+@onready var night_label: Label = $StatusPanel/Night
 @onready var missed_label: Label = $Missed
 @onready var warning_label: Label = $Warning
 
@@ -40,7 +43,7 @@ func _ready() -> void:
 	Game.clock_changed.connect(_on_clock_changed)
 	Game.objective_changed.connect(_on_objective_changed)
 	clock_label.text = Game.time_text()
-	objective_label.text = Game.current_objective
+	_refresh_objective_board()
 	prompt_label.text = ""
 	location_label.modulate = Color(1, 1, 1, 0)
 	message_label.modulate = Color(1, 1, 1, 0)
@@ -64,8 +67,60 @@ func _clock_text() -> String:
 	return Game.time_text()
 
 
-func _on_objective_changed(text: String) -> void:
-	objective_label.text = text
+func _on_objective_changed(_text: String) -> void:
+	_refresh_objective_board()
+
+
+## Draws the whole board, and sizes the panel to the lines it actually has.
+##
+## The objective is four separate fields rather than one sentence: WHAT to do,
+## WHERE to go, BY WHEN, and the position in tonight's list. Each gets its own
+## line, so nothing has to word-wrap and nothing can run off the edge of the
+## panel - which is exactly what the old single run-on string did. The panel is
+## also shrunk to fit: a job with no clock on it no longer leaves a dead strip of
+## panel hanging over the mall.
+func _refresh_objective_board() -> void:
+	# Second line of defence: the board never renders with a header and no
+	# instruction under it.
+	objective_label.text = Game.current_objective if Game.current_objective.strip_edges() != "" else "Walk your rounds."
+	objective_where.text = Game.objective_where
+	objective_where.visible = Game.objective_where != ""
+	objective_deadline.text = Game.objective_deadline
+	objective_deadline.visible = Game.objective_deadline != ""
+	if Game.objective_steps > 0:
+		objective_progress.text = "%d / %d" % [Game.objective_step, Game.objective_steps]
+	else:
+		objective_progress.text = ""
+
+	var top := 26.0
+	top = _stack_line(objective_label, top, 18.0)
+	top = _stack_line(objective_where, top, 14.0)
+	top = _stack_line(objective_deadline, top, 14.0)
+	# offset_top is 8, so the panel's own bottom edge is the stack plus padding.
+	$ObjectivePanel.offset_bottom = top + 6.0
+
+
+## Places one board line at `top` and returns where the next one starts.
+##
+## The height is MEASURED, not assumed. The instruction line wraps, so a long one
+## takes two rows and the lines under it have to move down or they land on top of
+## each other. This is also the fix for the instruction running off the panel: a
+## Label with autowrap OFF does not clip, it grows its own rect to fit its text and
+## escapes whatever panel is drawn behind it - which is how "Complete your
+## orientation to begin your shift." ended up half outside the board.
+func _stack_line(label: Label, top: float, minimum: float) -> float:
+	if not label.visible:
+		return top
+	var needed := minimum
+	var font := label.get_theme_font("font")
+	var width := label.offset_right - label.offset_left
+	if font != null and width > 0.0:
+		var measured: Vector2 = font.get_multiline_string_size(
+			label.text, HORIZONTAL_ALIGNMENT_LEFT, width, label.get_theme_font_size("font_size"))
+		needed = maxf(minimum, measured.y)
+	label.offset_top = top
+	label.offset_bottom = top + needed
+	return top + needed
 
 
 ## Every room now carries a proper world sign (mall.gd._put_sign), so this only
@@ -220,6 +275,20 @@ func _draw_waypoint() -> void:
 		if _mall.room_rect_world(Game.objective_room).has_point(_player.global_position):
 			return
 
+	# Which way to WALK, not which way the target lies.
+	#
+	# The arrow used to aim straight at the objective, so standing in a shop with
+	# the target on the far side of a wall pointed the guard into that wall - the
+	# reported "it only points left and sends me at a door I cannot use". It now
+	# aims down the first leg of the same A* route the enemies walk, so it follows
+	# corridors and doorways because the route does.
+	var aim := target
+	var route: PackedVector2Array = _mall.find_path(_player.global_position, target)
+	for step in route:
+		if _player.global_position.distance_to(step) > 56.0:
+			aim = step
+			break
+
 	var vp := waypoint.size
 	# Keep the arrow clear of the objective panel above and the message line below.
 	var min_pt := Vector2(34.0, 92.0)
@@ -242,7 +311,12 @@ func _draw_waypoint() -> void:
 		waypoint.draw_arc(sp, 11.0, 0.0, TAU, 24, col, 2.0)
 		_centered_text(waypoint, label, sp + Vector2(0, 22), 14, Color(0.95, 0.9, 0.7, 0.85))
 	else:
-		var dir := (sp - center).normalized()
+		# The camera is axis-aligned and unscaled, so a world direction is also the
+		# screen direction and the arrow needs no transform to point correctly.
+		var dir := aim - _player.global_position
+		if dir.length() < 1.0:
+			dir = target - _player.global_position
+		dir = dir.normalized()
 		if dir == Vector2.ZERO:
 			dir = Vector2.DOWN
 		var tscale: float = minf(half.x / maxf(absf(dir.x), 0.001), half.y / maxf(absf(dir.y), 0.001))
@@ -258,9 +332,10 @@ func _centered_text(target: Control, text: String, at: Vector2, size_px: int, co
 	var font := ThemeDB.fallback_font
 	var w := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, size_px).x
 	var origin := at + Vector2(-w * 0.5, 0)
-	# A backing pill keeps this readable wherever it lands. As bare glyphs it sat
-	# directly on top of the mall's own room signs, and the two merged into an
-	# unreadable pile of text.
-	target.draw_rect(Rect2(origin + Vector2(-5, -3), Vector2(w + 10.0, size_px + 5.0)),
-		Color(0.05, 0.05, 0.08, 0.75), true)
+	# The distance label is drawn with a text OUTLINE, never on a backing box. The
+	# box was a solid dark rectangle stuck to the middle of the screen - it read as
+	# a broken UI element floating over the mall. An outline keeps the digits
+	# legible over any floor or sign without hiding what is underneath.
+	target.draw_string_outline(font, origin, text, HORIZONTAL_ALIGNMENT_LEFT, -1,
+		size_px, 4, Color(0.02, 0.02, 0.04, 0.9))
 	target.draw_string(font, origin, text, HORIZONTAL_ALIGNMENT_LEFT, -1, size_px, color)

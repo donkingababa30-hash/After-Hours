@@ -1,0 +1,16 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/objects/service_panel.gd" id="1_sp"]
+[ext_resource type="Texture2D" path="res://assets/generated/prop_breaker.png" id="2_tex"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_sp"]
+size = Vector2(56, 64)
+
+[node name="ServicePanel" type="Area2D"]
+script = ExtResource("1_sp")
+
+[node name="Sprite" type="Sprite2D" parent="."]
+texture = ExtResource("2_tex")
+
+[node name="Shape" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_sp")

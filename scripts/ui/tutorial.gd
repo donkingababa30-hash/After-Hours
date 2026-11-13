@@ -37,7 +37,7 @@ func _ready() -> void:
 	_active = Game.tutorial_pending
 	visible = _active
 	if _active:
-		Game.set_objective("Complete your orientation to begin your shift.")
+		Game.set_objective("Complete your orientation", "", Vector2.ZERO, "Read the briefing card")
 
 
 func _input(event: InputEvent) -> void:

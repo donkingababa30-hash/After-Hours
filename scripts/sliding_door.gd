@@ -5,6 +5,10 @@ extends Area2D
 
 const SFX_SLIDE := preload("res://assets/generated/audio/door_slide.mp3")
 
+## Same door layer the solid doors use: only the player masks it, so a shut
+## storefront never blocks a hunter's pathing.
+const DOOR_LAYER := 16
+
 @export var door_width := 128.0
 
 @onready var left: Sprite2D = $Left
@@ -13,6 +17,7 @@ const SFX_SLIDE := preload("res://assets/generated/audio/door_slide.mp3")
 
 var _open := false
 var _tween: Tween = null
+var _blocker: StaticBody2D = null
 
 
 func _ready() -> void:
@@ -36,6 +41,24 @@ func _configure() -> void:
 	rect.size = Vector2(door_width + 20.0, 58.0)
 	reach.shape = rect
 
+	# The glass is solid while it is drawn shut.
+	#
+	# These doors are automatic: the reach rectangle is wider than the door, so
+	# the guard trips the sensor and the panels part BEFORE they can touch the
+	# glass. Without this the door was drawn closed and could be walked straight
+	# through, which is the mismatch this whole pass exists to remove. The layer
+	# comes off the instant the door starts opening, not when the slide finishes,
+	# so a guard walking briskly is never stopped by their own door.
+	_blocker = StaticBody2D.new()
+	_blocker.collision_layer = DOOR_LAYER
+	_blocker.collision_mask = 0
+	var block_shape := CollisionShape2D.new()
+	var glass := RectangleShape2D.new()
+	glass.size = Vector2(door_width, 20.0)
+	block_shape.shape = glass
+	_blocker.add_child(block_shape)
+	add_child(_blocker)
+
 
 func _on_body_entered(body: Node) -> void:
 	if body is Player:
@@ -45,7 +68,7 @@ func _on_body_entered(body: Node) -> void:
 func _on_body_exited(body: Node) -> void:
 	if not (body is Player):
 		return
-	await get_tree().create_timer(0.55).timeout
+	await get_tree().create_timer(0.3).timeout
 	if is_instance_valid(self) and not _player_inside():
 		_set_open(false)
 
@@ -61,6 +84,8 @@ func _set_open(open: bool) -> void:
 	if open == _open:
 		return
 	_open = open
+	if _blocker != null:
+		_blocker.collision_layer = 0 if open else DOOR_LAYER
 	if _tween != null and _tween.is_valid():
 		_tween.kill()
 
@@ -71,8 +96,8 @@ func _set_open(open: bool) -> void:
 	var alpha := 0.12 if open else 1.0
 
 	_tween = create_tween().set_parallel(true)
-	_tween.tween_property(left, "position", target_l, 0.45).set_trans(Tween.TRANS_CUBIC)
-	_tween.tween_property(right, "position", target_r, 0.45).set_trans(Tween.TRANS_CUBIC)
-	_tween.tween_property(left, "modulate:a", alpha, 0.35)
-	_tween.tween_property(right, "modulate:a", alpha, 0.35)
+	_tween.tween_property(left, "position", target_l, 0.22).set_trans(Tween.TRANS_CUBIC)
+	_tween.tween_property(right, "position", target_r, 0.22).set_trans(Tween.TRANS_CUBIC)
+	_tween.tween_property(left, "modulate:a", alpha, 0.18)
+	_tween.tween_property(right, "modulate:a", alpha, 0.18)
 	ZivaSfx.play(self, SFX_SLIDE, 0.05, -13.0)

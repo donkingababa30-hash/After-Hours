@@ -7,10 +7,13 @@ extends MallAgent
 @export var lurk_speed := 62.0
 @export var charge_speed := 140.0
 
+const SFX_CUE := preload("res://assets/generated/audio/breath.mp3")
+
 @onready var sprite: AnimatedSprite2D = $Sprite
 
 var aggressive := false
 var _aggression := 0.0
+var _cue_t := 1.2
 
 
 func _ready() -> void:
@@ -30,7 +33,9 @@ func _on_activate_visuals() -> void:
 
 func _think(delta: float) -> void:
 	var lit := in_beam(0.85, 300.0)
-	var too_close := target != null and target.flashlight_on and global_position.distance_to(target.global_position) < 80.0
+	var too_close := target != null and target.flashlight_on \
+		and global_position.distance_to(target.global_position) < 80.0 \
+		and has_line_of_sight(target.global_position)
 	if lit or too_close:
 		_aggression = 1.5
 	else:
@@ -39,11 +44,21 @@ func _think(delta: float) -> void:
 
 	if aggressive or _can_sense():
 		set_state(State.CHASE)
+		if target != null:
+			note_contact(target.global_position)
 	else:
 		set_state(State.PATROL)
 
 	if sprite != null:
 		sprite.modulate = Color(1, 0.75, 0.75) if aggressive else Color(1, 1, 1)
+
+	# A cold exhalation while it is locked on - the audible half of the red tint,
+	# so the player is told their light has been noticed before it closes.
+	_cue_t -= delta
+	if _cue_t <= 0.0:
+		_cue_t = 2.4
+		if aggressive:
+			ZivaSfx.play(self, SFX_CUE, 0.5, -18.0)
 
 
 func _goal() -> Vector2:

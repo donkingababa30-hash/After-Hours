@@ -17,6 +17,7 @@ const ANOMALY_SCENE := preload("res://scenes/objects/anomaly.tscn")
 const TOY_SCENE := preload("res://scenes/entities/haunted_toy.tscn")
 const WARDEN_SCENE := preload("res://scenes/entities/warden.tscn")
 const TASK_ITEM_SCENE := preload("res://scenes/objects/task_item.tscn")
+const WATCH_ITEM_SCENE := preload("res://scenes/objects/watch_item.tscn")
 
 const TILE := 32
 const MIDNIGHT_MINUTES := 120
@@ -24,6 +25,24 @@ const MIDNIGHT_MINUTES := 120
 ## 300, so the shadow could only ever exist in the last instant of night 3. It was
 ## fully implemented and effectively unreachable.
 const SHADOW_MINUTES := 165
+## Game minutes after which the wind-up toys can wake in the east wing, per night.
+## They used to need true midnight (120) AND a return trip to the TOYBOX that no
+## night's duty board ever asked for, so the Toy Creeper was almost never seen.
+const TOY_FROM := [80, 45, 20]
+
+## --- the night watch -------------------------------------------------------
+## Real seconds of quiet between incidents, per night. Night 1 is sparse; by
+## night 3 the mall barely leaves the guard alone.
+const WATCH_GAP := [90.0, 68.0, 50.0]
+## Incidents do not begin until the shift is properly under way.
+const WATCH_FROM := [70, 40, 26]
+## Game minutes an open incident lasts before it is logged against the guard.
+const WATCH_DEADLINE := 20
+## Incidents run further apart while the duty board still has rounds on it, so
+## the guard is never asked to do two jobs at the same time.
+const WATCH_DUTY_MULT := 1.7
+## ...and closer together once the board is clear and the night has turned.
+const WATCH_FINALE_MULT := 0.7
 
 var mall: Node2D
 var hud: GameHud
@@ -36,33 +55,44 @@ var shadow: ShadowEntity = null
 var gamezone_lights: Array[PointLight2D] = []
 
 ## Each patrol stop is an ANOMALY to hunt down, not just a room to walk into.
+##
+## `text` is the short instruction for the objective board and `where` its
+## location line; `clue` is the full sentence, which is what the guard actually
+## writes in the log. Keeping them separate is what stops the board rendering a
+## whole paragraph across the top of the screen.
 var patrol_stops := [
-	{"room": "Main Atrium", "clue": "Something is dripping in the Main Atrium.",
+	{"room": "Main Atrium", "text": "Inspect the spill", "where": "Main Atrium",
+		"clue": "Something is dripping in the Main Atrium.",
 		"tex": "res://assets/generated/anomaly_stain.png",
 		"msg": "A pool of something dark and warm, spread in a shape that is almost a hand.",
 		"glow": Color(0.72, 0.08, 0.08),
 		"spots": [Vector2i(33, 25), Vector2i(28, 25)]},
-	{"room": "Food Court", "clue": "A chair is scraping across the Food Court.",
+	{"room": "Food Court", "text": "Inspect the scraping chair", "where": "Food Court",
+		"clue": "A chair is scraping across the Food Court.",
 		"tex": "res://assets/generated/anomaly_note.png",
 		"msg": "A note in your handwriting: 'IT IS BEHIND YOU WHEN THE LIGHTS FLICKER.'",
 		"glow": Color(0.9, 0.86, 0.62),
 		"spots": [Vector2i(32, 38), Vector2i(32, 41)]},
-	{"room": "Fashion Hub", "clue": "Hangers are moving in the Fashion Hub.",
+	{"room": "Fashion Hub", "text": "Inspect the moving hangers", "where": "Fashion Hub",
+		"clue": "Hangers are moving in the Fashion Hub.",
 		"tex": "res://assets/generated/anomaly_stain.png",
 		"msg": "Blood between the racks, in a trail that leads toward the back wall.",
 		"glow": Color(0.72, 0.08, 0.08),
 		"spots": [Vector2i(55, 10), Vector2i(50, 11)]},
-	{"room": "Game Zone", "clue": "An arcade cabinet in the Game Zone is still running.",
+	{"room": "Game Zone", "text": "Inspect the live cabinet", "where": "Game Zone, arcade",
+		"clue": "An arcade cabinet in the Game Zone is still running.",
 		"tex": "res://assets/generated/anomaly_eyes.png",
 		"msg": "Two points of light at the back of the aisle. They do not blink.",
 		"glow": Color(0.45, 0.85, 1.0),
 		"spots": [Vector2i(34, 11), Vector2i(35, 9)]},
-	{"room": "Storage Room", "clue": "A crate has been dragged in the Storage Room.",
+	{"room": "Storage Room", "text": "Inspect the drag marks", "where": "Storage Room",
+		"clue": "A crate has been dragged in the Storage Room.",
 		"tex": "res://assets/generated/anomaly_stain.png",
 		"msg": "Something was dragged across the concrete. The trail goes under the shelves.",
 		"glow": Color(0.72, 0.08, 0.08),
 		"spots": [Vector2i(13, 52), Vector2i(13, 55)]},
-	{"room": "TOYBOX", "clue": "A music box is playing in the TOYBOX.",
+	{"room": "TOYBOX", "text": "Find the music box", "where": "TOYBOX, east wing",
+		"clue": "A music box is playing in the TOYBOX.",
 		"tex": "res://assets/generated/anomaly_note.png",
 		"msg": "A child's note, in careful capitals: 'DO NOT WIND THEM UP.'",
 		"glow": Color(0.88, 0.7, 0.95),
@@ -82,9 +112,24 @@ var haul_kind := ""
 var finale := false
 ## Game minute the current duty was handed out, so its deadline can be shown.
 var duty_started_at := 0
+## World position of the object the current duty put in the mall. The waypoint
+## aims HERE rather than at the room's centre: a wall-mounted panel, a spawned
+## anomaly and the breaker all sit off to one side of their room, so pointing at
+## the room sent the guard to an empty patch of floor with nothing to interact
+## with - the reported "waypoint but nothing there".
+var duty_point := Vector2.ZERO
 
 ## Counts real seconds between forced pressure beats. Keeps the mall busy.
 var _pressure_t := 0.0
+
+## The open watch incident, if any, and how long it has been open.
+var watch_item: Node2D = null
+var watch_started_at := 0
+var watch_timer := 0.0
+## What the guard failed to deal with, written to the log if the round is missed.
+var watch_doom := ""
+## Seconds the guard has been clear of the mannequin; see _process.
+var _mannequin_escape_t := 0.0
 
 var warden: WardenEntity = null
 var warden_active := false
@@ -135,7 +180,10 @@ func setup(mall_ref: Node2D, hud_ref: GameHud, player_ref: Player, objects_ref: 
 
 	var door := get_tree().get_first_node_in_group("service_door")
 	if door != null:
-		door.door_closed.connect(_on_service_door_closed)
+		# "closed" rather than "door_closed": the door is a real MallDoor now, and
+		# sealing it is a deliberate act the player takes after rerouting the panel
+		# beside it - not something that happens during a wire puzzle.
+		door.closed.connect(_on_service_door_closed)
 	var breaker := get_tree().get_first_node_in_group("breaker")
 	if breaker != null:
 		breaker.restored.connect(_on_breaker_restored)
@@ -143,7 +191,7 @@ func setup(mall_ref: Node2D, hud_ref: GameHud, player_ref: Player, objects_ref: 
 	if Game.loading_save:
 		_restore_from_save()
 	elif Game.tutorial_pending:
-		Game.set_objective("Complete your orientation to begin your shift.")
+		Game.set_objective("Complete your orientation", "", Vector2.ZERO, "Read the briefing card")
 		_start_practice()
 	else:
 		_start_duties()
@@ -159,8 +207,20 @@ func _restore_from_save() -> void:
 	hud.set_anomalies(logged_anomalies)
 	Game.missed_rounds = int(Game.loaded_data.get("missed", 0))
 	hud.set_missed(Game.missed_rounds)
-	duties = NightConfig.for_night(Game.night)["duties"].duplicate(true)
+	# This MUST go through _build_duties(), not a raw NightConfig copy. The inspect
+	# duties in NightConfig carry only a stop_index; _build_duties() is what copies
+	# the clue text and the room across from the anomaly table. Restoring without
+	# it left every inspect round with a blank objective, a "Duty:" line with
+	# nothing after it in the shift log, and no destination on the board.
+	_build_duties()
 	duty_index = clampi(int(Game.loaded_data.get("patrol_index", 0)), 0, duties.size())
+	# A save taken after the door was sealed must come back sealed. The door is a
+	# real solid one now, so restoring it open would leave the guard looking at a
+	# duty they had already walked.
+	if Game.has_flag("service_door_closed"):
+		var sealed_door := get_tree().get_first_node_in_group("service_door")
+		if sealed_door != null and sealed_door.has_method("force_closed"):
+			sealed_door.call("force_closed")
 	if Game.has_flag("warden_active"):
 		_start_warden()
 	_start_current_duty()
@@ -204,14 +264,24 @@ func _process(delta: float) -> void:
 	# The mannequin is beaten by putting distance between you and it while
 	# keeping the beam on it. That works wherever it happens to be standing.
 	if mannequin_active and mannequin != null and is_instance_valid(mannequin):
+		# The distance has to be HELD, not merely touched. Resolving on a single
+		# frame past 470px meant a mannequin that spawned far from the guard was
+		# over before it ever appeared on screen.
 		if player.global_position.distance_to(mannequin.global_position) > MANNEQUIN_ESCAPE:
-			_resolve_mannequin()
+			_mannequin_escape_t += delta
+			if _mannequin_escape_t > 1.5:
+				_mannequin_escape_t = 0.0
+				_resolve_mannequin()
+		else:
+			_mannequin_escape_t = 0.0
 
 	player.in_safe_room = _player_in_safe_room()
 	_update_dread(delta)
 	_update_director(delta)
+	_maybe_start_toy()
 	_tick_warden(delta)
 	_tick_duty_deadline()
+	_tick_watch(delta)
 
 
 ## The first task: what the player sees on the feed changes what they must do.
@@ -368,8 +438,9 @@ func _on_trigger_enter(body: Node, tag: String) -> void:
 				hud.show_message("Ceramic scraping, coming from the Fashion Hub. It stops when you look in.")
 				Game.add_log_entry("Fashion Hub - scraping heard. Source not seen.")
 				return
-		"TOYBOX":
-			if not toy_active and not Game.has_flag("toy_done") and Game.elapsed_minutes >= MIDNIGHT_MINUTES:
+		"TOYBOX", "CINEMA":
+			var toy_gate := int(TOY_FROM[clampi(Game.night - 1, 0, TOY_FROM.size() - 1)])
+			if not toy_active and not Game.has_flag("toy_done") and Game.elapsed_minutes >= toy_gate:
 				_start_toy()
 				return
 
@@ -384,7 +455,7 @@ func _on_trigger_exit(body: Node, tag: String) -> void:
 		_resolve_mannequin()
 	elif tag == "Game Zone Front" and open_store_active:
 		_resolve_open_store()
-	elif tag == "TOYBOX" and toy_active:
+	elif (tag == "TOYBOX" or tag == "CINEMA") and toy_active:
 		_resolve_toy()
 
 
@@ -397,10 +468,20 @@ func _start_mannequin() -> void:
 	mannequin_active = true
 	Game.set_flag("mannequin_active", true)
 	mannequin = MANNEQUIN_SCENE.instantiate()
-	mannequin.position = _hunter_spawn_near_player()
+	# Never lay a hunter down inside the safe room. One that spawns in the office
+	# is standing in the one place it is supposed to be unable to reach, and the
+	# guard has to watch it back out of their own room - which reads as the rule
+	# being broken even though it can never reach them there.
+	var spot := _hunter_spawn_near_player()
+	var safe: Rect2 = mall.room_rect_world("Security Office").grow(48.0)
+	if safe.has_point(spot):
+		spot = Vector2(safe.get_center().x, safe.position.y - 40.0)
+	mannequin.position = spot
 	mannequin.move_speed = _night_speed(mannequin.move_speed)
 	mannequin.activate(player)
 	mannequin.caught_player.connect(_on_mannequin_caught)
+	# The safe-room exit: it gives up rather than camping the office doorway.
+	mannequin.gave_up.connect(_on_mannequin_gave_up)
 	entities.add_child.call_deferred(mannequin)
 	hud.set_danger(true)
 	ZivaSfx.play(self, SFX_STING, 0.05, -7.0)
@@ -454,6 +535,15 @@ func _resolve_mannequin() -> void:
 
 func _on_mannequin_caught() -> void:
 	_fail("res://assets/generated/mannequin.png", "The mannequin reached you.")
+
+
+## It gave up at the office threshold. Same cleanup as every other exit route, so
+## the encounter cannot be left half-resolved with the thing still on the board.
+func _on_mannequin_gave_up() -> void:
+	if not mannequin_active:
+		return
+	_resolve_mannequin()
+	hud.show_message("It does not follow you in. It stands in the corridor, and then it is gone.")
 
 
 # --- encounter 2: the open store ------------------------------------------
@@ -520,8 +610,29 @@ func _start_shadow() -> void:
 	hud.show_message("It charges at torchlight. Kill your light and it loses you - and a flare pulls it off your trail completely.")
 
 
+## A point in a corridor lane that is guaranteed to be on walkable floor.
+##
+## The old code clamped x to the map edge (MAP_W*TILE-96 = 2720), but the corridor
+## only reaches x about 2551 - so a hunter released from the far east was dropped
+## inside solid wall and ground against it for the rest of the night. This walks
+## the lane until it finds real floor instead of trusting a number.
+func _lane_point(lane_y: float, want_x: float) -> Vector2:
+	var edge := float(mall.MAP_W * TILE) - 96.0
+	var x := clampf(want_x, 96.0, edge)
+	if mall.is_walkable(Vector2(x, lane_y)):
+		return Vector2(x, lane_y)
+	for i in 40:
+		var left := clampf(x - 32.0 * float(i), 96.0, edge)
+		if mall.is_walkable(Vector2(left, lane_y)):
+			return Vector2(left, lane_y)
+		var right := clampf(x + 32.0 * float(i), 96.0, edge)
+		if mall.is_walkable(Vector2(right, lane_y)):
+			return Vector2(right, lane_y)
+	return Vector2(1024.0, lane_y)
+
+
 ## Drops the shadow into the corridor lane nearest the player, a good distance
-## away. Spawning it at the map edge left it grinding along walls.
+## away, on floor that actually exists.
 func _shadow_spawn_point() -> Vector2:
 	var px: float = player.global_position.x
 	var py: float = player.global_position.y
@@ -531,8 +642,7 @@ func _shadow_spawn_point() -> Vector2:
 		if absf(candidate - py) < absf(lane - py):
 			lane = candidate
 	var dir := -1.0 if px > 1024.0 else 1.0
-	var x := clampf(px + dir * 460.0, 96.0, float(mall.MAP_W * TILE - 96))
-	return Vector2(x, lane)
+	return _lane_point(lane, px + dir * 460.0)
 
 
 func _resolve_shadow() -> void:
@@ -560,11 +670,20 @@ func _on_shadow_caught() -> void:
 ## 2 AM. The west wing drops out. There is a way to fix it, and it is hands-on.
 func _start_power_out() -> void:
 	power_out_active = true
+	duty_point = _breaker_position()
 	_dim_lights(true)
 	hud.show_message("Every light in the west wing dies at once.")
-	Game.set_objective("The west wing has gone dark. Reset the breaker in Storage.", "Storage Room")
 	Game.add_log_entry("Power lost in the west wing.")
 	ZivaSfx.play(self, SFX_STING, 0.05, -12.0)
+
+
+## The breaker is a fixed fitting on the Storage Room wall, so its own position is
+## the objective point - the room's centre is a different place entirely.
+func _breaker_position() -> Vector2:
+	var breaker := get_tree().get_first_node_in_group("breaker") as Node2D
+	if breaker == null:
+		return Vector2.ZERO
+	return breaker.global_position
 
 
 func _on_breaker_restored() -> void:
@@ -593,10 +712,17 @@ func _start_toy() -> void:
 	toy_active = true
 	Game.set_flag("toy_active", true)
 	toys.clear()
-	for cell in [Vector2i(74, 10), Vector2i(71, 5), Vector2i(82, 9)]:
+	# Spawn in the east wing near the guard rather than at three fixed TOYBOX cells.
+	# Fixed cells meant that if the guard was in the CINEMA (the other east-wing
+	# room, a wall away) the toys woke in a room the guard was not in and could not
+	# reach them - so the encounter could pass entirely unseen. Spawning nearby
+	# guarantees the encounter actually happens wherever in the east wing they are.
+	for i in 2:
 		var haunted := TOY_SCENE.instantiate()
-		haunted.position = Vector2(cell.x * TILE + 16, cell.y * TILE + 16)
-		haunted.set_home(haunted.position)
+		var spot := _hunter_spawn_near_player(300.0, 520.0)
+		haunted.position = spot
+		haunted.set_home(spot)
+		haunted.wake_delay = 2.5
 		haunted.hunt_speed = _night_speed(haunted.hunt_speed)
 		haunted.activate(player)
 		haunted.caught_player.connect(_on_toy_caught)
@@ -608,6 +734,35 @@ func _start_toy() -> void:
 	Game.set_warning("THE TOYS ARE AWAKE. They come toward torchlight.")
 	hud.show_message("Something small is winding up between the shelves. They come toward the light.")
 	Game.add_log_entry("TOYBOX - a wind-up toy is walking on its own.")
+
+
+## The toy gate, checked EVERY FRAME rather than only on the room-entry edge.
+##
+## It used to fire only when the guard walked through a TOYBOX/CINEMA door after
+## the minute mark. A guard who was restored into the east wing by a save, or who
+## was simply already standing in the room when the minute ticked over, never
+## generated an entry event at all - so the whole encounter was silently skipped
+## for that night, which is exactly how a player finishes three shifts without
+## ever seeing the Toy Creeper.
+func _maybe_start_toy() -> void:
+	if toy_active or Game.has_flag("toy_done"):
+		return
+	var gate := int(TOY_FROM[clampi(Game.night - 1, 0, TOY_FROM.size() - 1)])
+	if Game.elapsed_minutes < gate:
+		return
+	var room := _room_at_player()
+	if room == "TOYBOX" or room == "CINEMA":
+		_start_toy()
+
+
+## The name of the room the guard is standing in, or "" for a corridor.
+func _room_at_player() -> String:
+	if player == null or not is_instance_valid(player) or mall == null:
+		return ""
+	for room_name in mall.rooms:
+		if mall.room_rect_world(room_name).has_point(player.global_position):
+			return room_name
+	return ""
 
 
 func _resolve_toy() -> void:
@@ -635,7 +790,6 @@ func _start_service_door_mission() -> void:
 	mission1_briefed = false
 	_dim_lights(true)
 	_spawn_loader_figure()
-	Game.set_objective("The east service door alarm has tripped. Check CAM 05 at your desk.", "Security Office")
 	hud.show_message("The east wing lights drop out. Something is at the service door.")
 	Game.add_log_entry("Shift start. East service door alarm tripped.")
 
@@ -715,6 +869,11 @@ func add_evidence(label: String) -> void:
 # --- helpers --------------------------------------------------------------
 
 func _refresh_objective() -> void:
+	# An open incident owns the board while it stands: it is the one job on the
+	# shift with a clock actively running against it. The duty it interrupted
+	# comes straight back the moment the round is walked.
+	if _watch_open():
+		return
 	# Finishing the list does NOT end the night - it starts the worst part of it.
 	if _current_duty().is_empty():
 		if not finale:
@@ -726,16 +885,23 @@ func _refresh_objective() -> void:
 	if _any_encounter():
 		return
 	if hauling:
-		Game.set_objective("Carry the %s back to the security office." % haul_kind, "Security Office")
+		Game.set_objective("Carry the %s back" % haul_kind, "Security Office", Vector2.ZERO,
+			"Security Office", "", duty_index + 1, duties.size())
 		return
 	var duty := _current_duty()
 	# Name the time the round has to be walked by, so the deadline is legible.
 	var limit := int(NightConfig.for_night(Game.night)["duty_deadline"])
-	var point := Vector2.ZERO
+	# Aim at the thing itself, wherever the duty spawned it, and fall back to the
+	# door for the door duty (which stands in a corridor, not in a room).
+	var point := duty_point
 	if str(duty["kind"]) == "door":
 		point = _door_position()
-	Game.set_objective("%s   (by %s)" % [str(duty.get("text", "")),
-		Game.time_text_at(duty_started_at + limit)], str(duty.get("room", "")), point)
+	# Four separate fields rather than one sentence: what to do, where to go, by
+	# when, and how far through tonight's list. The board draws each on its own
+	# line, so nothing has to wrap and nothing can run off the panel.
+	Game.set_objective(str(duty.get("text", "")), str(duty.get("room", "")), point,
+		str(duty.get("where", "")), "by " + Game.time_text_at(duty_started_at + limit),
+		duty_index + 1, duties.size())
 
 
 ## Where the service door actually is. It stands in the corridor, not in Storage,
@@ -768,7 +934,7 @@ func _duty_expired() -> void:
 		return
 	Game.missed_rounds += 1
 	hud.set_missed(Game.missed_rounds)
-	Game.add_log_entry("MISSED ROUND: " + str(duty.get("text", "")))
+	Game.add_log_entry("MISSED ROUND: " + str(duty.get("detail", duty.get("text", ""))))
 	ZivaSfx.play(self, SFX_STING, 0.05, -5.0)
 	if Game.missed_rounds >= Game.MAX_MISSED_ROUNDS:
 		_dereliction()
@@ -815,7 +981,167 @@ func _start_finale() -> void:
 
 
 func _finale_objective() -> void:
-	Game.set_objective("Every duty is logged. Survive to the end of your shift.")
+	# The last stretch has a real destination rather than a mood: the office is
+	# the one room nothing will follow you into, so the arrow points there.
+	Game.set_objective("Survive to the end of your shift", "Security Office", Vector2.ZERO,
+		"Get back to the Security Office", "", 0, 0)
+
+
+# --- the night watch ------------------------------------------------------
+# Clearing the duty board does not end the shift, it changes it. From then until
+# dawn the guard is doing the actual job - watching the mall - and the mall keeps
+# handing them something to watch. A round left unwalked costs a missed round
+# exactly like a missed duty, so the security office stays safe from the things
+# that chase you and is never safe from the work itself. That was the hole: a
+# guard who cleared the list could sit in the office until morning and nothing
+# anywhere in the game objected.
+
+## Everything that can be wrong tonight. Each entry has the same shape: somewhere,
+## a thing, the words on the prompt, what the guard writes afterwards, and what
+## goes in the log if nobody ever goes.
+const WATCH_KINDS := [
+	{"room": "Techworld", "tex": "prop_shutter",
+		"text": "Close the open shutter", "where": "Techworld",
+		"clue": "A store shutter is up in Techworld.",
+		"prompt": "Pull the shutter down",
+		"done": "The shutter was up. Nothing inside, but the till drawer was open.",
+		"doom": "That shutter stood open all night."},
+	{"room": "Beauty Co.", "tex": "prop_breaker",
+		"text": "Cut the Beauty Co. lights", "where": "Beauty Co.",
+		"clue": "The Beauty Co. lights are on after closing.",
+		"prompt": "Cut the circuit",
+		"done": "The lights cut. The mirrors stayed lit a moment longer than the ceiling did.",
+		"doom": "Beauty Co. burned its lights until dawn."},
+	{"room": "Food Court", "tex": "anomaly_note",
+		"text": "Confirm the scraping chair", "where": "Food Court",
+		"clue": "A chair is scraping across the Food Court.",
+		"prompt": "Confirm the report",
+		"done": "One chair, pushed back from a table laid for two.",
+		"doom": "Nobody walked the Food Court."},
+	{"room": "Storage Room", "tex": "prop_crate",
+		"text": "Check the moved crate", "where": "Storage Room",
+		"clue": "A crate has moved in Storage.",
+		"prompt": "Check the crate",
+		"done": "Open and empty. The manifest says it was never filled.",
+		"doom": "The crate in Storage was left standing open."},
+	{"room": "Restrooms", "tex": "prop_wastebin",
+		"text": "Shut off the running water", "where": "Restrooms",
+		"clue": "Water is running in the Restrooms.",
+		"prompt": "Shut the water off",
+		"done": "Every tap was running. One of them stopped when you touched it.",
+		"doom": "The restrooms ran all night."},
+	{"room": "TOYBOX", "tex": "prop_rockinghorse",
+		"text": "Wind down the music box", "where": "TOYBOX, east wing",
+		"clue": "A music box is playing in the TOYBOX.",
+		"prompt": "Wind it down",
+		"done": "It ran down. It was still warm.",
+		"doom": "The TOYBOX played to an empty wing."},
+	{"room": "CINEMA", "tex": "prop_dollhouse",
+		"text": "Kill the running projector", "where": "CINEMA, east wing",
+		"clue": "The CINEMA projector is running to an empty screen.",
+		"prompt": "Kill the projector",
+		"done": "Still running. The reel was never threaded.",
+		"doom": "The CINEMA showed its film to nobody."},
+	# Not every report sends the guard away from the office. One of them is the
+	# desk itself, which is what makes the cameras worth walking back for.
+	{"room": "Security Office", "tex": "terminal",
+		"text": "Review the camera log", "where": "Security Office, your desk",
+		"clue": "The camera server has logged a fault. Review the feed.",
+		"prompt": "Review the camera log",
+		"done": "Four minutes of the west wing corridor are missing from the recording.",
+		"doom": "Nobody reviewed the camera log."},
+]
+
+
+func _watch_open() -> bool:
+	return watch_item != null and is_instance_valid(watch_item)
+
+
+func _tick_watch(delta: float) -> void:
+	if _failing or Game.tutorial_pending:
+		return
+	var night := clampi(Game.night - 1, 0, WATCH_FROM.size() - 1)
+	if Game.elapsed_minutes < int(WATCH_FROM[night]):
+		return
+	if _watch_open():
+		# Open incident: the only question is whether the guard got there.
+		if Game.elapsed_minutes - watch_started_at >= WATCH_DEADLINE:
+			_watch_expired()
+		return
+	# Never lay a fresh incident on top of something already hunting the guard.
+	# The night should be varied, not a pile-up.
+	if _any_encounter():
+		return
+	watch_timer -= delta
+	if watch_timer > 0.0:
+		return
+	_start_watch()
+
+
+func _start_watch() -> void:
+	var entry: Dictionary = WATCH_KINDS[randi() % WATCH_KINDS.size()]
+	var room := str(entry["room"])
+	if not mall.rooms.has(room):
+		return
+	watch_doom = str(entry["doom"])
+	var spot := _clear_spot(_duty_spot(room, Vector2.ZERO))
+	var item := WATCH_ITEM_SCENE.instantiate()
+	item.position = spot
+	item.setup("res://assets/generated/%s.png" % entry["tex"],
+		str(entry["prompt"]), str(entry["done"]))
+	item.resolved.connect(_on_watch_resolved)
+	objects.add_child(item)
+	watch_item = item
+	watch_started_at = Game.elapsed_minutes
+	Game.set_objective(str(entry["text"]), room, spot, str(entry.get("where", room)),
+		"by " + Game.time_text_at(watch_started_at + WATCH_DEADLINE), 0, 0)
+	hud.show_message(str(entry["clue"]))
+	Game.add_log_entry("Report: " + str(entry["clue"]))
+	ZivaSfx.play(self, SFX_STING, 0.05, -15.0)
+	_arm_watch_timer()
+
+
+## Rest between incidents. Longer while the board still has rounds on it, shorter
+## once it is clear and the mall has the guard to itself.
+func _arm_watch_timer() -> void:
+	var night := clampi(Game.night - 1, 0, WATCH_GAP.size() - 1)
+	var gap := float(WATCH_GAP[night])
+	if not _current_duty().is_empty():
+		gap *= WATCH_DUTY_MULT
+	elif finale:
+		gap *= WATCH_FINALE_MULT
+	watch_timer = gap
+
+
+func _on_watch_resolved() -> void:
+	watch_item = null
+	watch_doom = ""
+	add_evidence("Logged a round: the mall was walked.")
+	hud.show_message("Round logged. Evidence is mounting.")
+	_arm_watch_timer()
+	_refresh_objective()
+	autosave()
+
+
+## The round went unwalked. Same teeth as a missed duty, and for the same reason:
+## the office is allowed to be safe, but it is not allowed to be idle.
+func _watch_expired() -> void:
+	if _watch_open():
+		watch_item.queue_free()
+	watch_item = null
+	Game.missed_rounds += 1
+	hud.set_missed(Game.missed_rounds)
+	Game.add_log_entry("MISSED ROUND: " + watch_doom)
+	ZivaSfx.play(self, SFX_STING, 0.05, -6.0)
+	watch_doom = ""
+	if Game.missed_rounds >= Game.MAX_MISSED_ROUNDS:
+		_dereliction()
+		return
+	hud.show_message("That report went unwalked. Management has logged it.")
+	_release_hunter()
+	_arm_watch_timer()
+	_refresh_objective()
+	autosave()
 
 
 # --- the duty board -------------------------------------------------------
@@ -843,7 +1169,12 @@ func _build_duties() -> void:
 	for duty in duties:
 		if str(duty["kind"]) == "inspect":
 			var stop: Dictionary = patrol_stops[int(duty["stop_index"])]
-			duty["text"] = stop["clue"]
+			# Short instruction and location for the board, full sentence for the
+			# log. The clue used to be written straight into `text`, which is why
+			# an inspect round put a whole sentence on the board.
+			duty["text"] = stop["text"]
+			duty["where"] = stop["where"]
+			duty["detail"] = stop["clue"]
 			duty["room"] = stop["room"]
 
 
@@ -882,8 +1213,8 @@ func _start_current_duty() -> void:
 		"haul":
 			_spawn_carry(duty)
 	_refresh_objective()
-	hud.show_message(str(duty.get("text", "")))
-	Game.add_log_entry("Duty: " + str(duty.get("text", "")))
+	hud.show_message(str(duty.get("detail", duty.get("text", ""))))
+	Game.add_log_entry("Duty: " + str(duty.get("detail", duty.get("text", ""))))
 
 
 ## Marks the duty done, banks the evidence and moves the shift on.
@@ -906,6 +1237,7 @@ func _clear_duty_objects() -> void:
 	if active_anomaly != null and is_instance_valid(active_anomaly):
 		active_anomaly.queue_free()
 	active_anomaly = null
+	duty_point = Vector2.ZERO
 	hauling = false
 	haul_kind = ""
 	for node in get_tree().get_nodes_in_group("task_item"):
@@ -982,6 +1314,7 @@ func _spawn_task(duty: Dictionary, kind: String, title: String, texture: String,
 	if wall_mount:
 		spot = _snap_to_wall(spot, str(duty.get("room", "")))
 	item.position = spot
+	duty_point = spot
 	item.setup(kind, title, texture)
 	item.solved.connect(_on_task_solved)
 	objects.add_child.call_deferred(item)
@@ -994,6 +1327,7 @@ func _on_task_solved() -> void:
 func _spawn_carry(duty: Dictionary) -> void:
 	var item := TASK_ITEM_SCENE.instantiate()
 	item.position = _clear_spot(_duty_spot(str(duty.get("room", "")), Vector2.ZERO))
+	duty_point = item.position
 	item.add_to_group("duty_carry")
 	item.setup("carry", "LOG", "res://assets/generated/anomaly_note.png",
 		str(duty.get("carry", "item")))
@@ -1053,7 +1387,12 @@ func _hunter_count() -> int:
 ## pool - they were always in the game, they just rarely got the chance to run.
 func _release_hunter() -> void:
 	var cfg := NightConfig.for_night(Game.night)
-	if bool(cfg["warden"]) and not warden_active:
+	# The Warden is gated by a minute mark, not by a whole night. Tying it to night
+	# 3 alone meant a player had to survive two full shifts before they could ever
+	# see it; now night 2 grows one late in the shift and night 3 gets it almost at
+	# once. -1 means the night never grows one.
+	var warden_from := int(cfg.get("warden_from", -1))
+	if warden_from >= 0 and not warden_active and Game.elapsed_minutes >= warden_from:
 		_start_warden()
 		return
 	# Night 1 leads with the gentlest rule there is: a mannequin that light can
@@ -1108,15 +1447,15 @@ func _warden_patrol() -> Array[Vector2]:
 	var px := player.global_position.x
 	var points: Array[Vector2] = []
 	for lane in [528.0, 1008.0, 1488.0]:
-		points.append(Vector2(clampf(px + 300.0, 96.0, 2720.0), lane))
-		points.append(Vector2(clampf(px - 300.0, 96.0, 2720.0), lane))
+		points.append(_lane_point(lane, px + 300.0))
+		points.append(_lane_point(lane, px - 300.0))
 	return points
 
 
 func _on_warden_latched() -> void:
 	player.latched = true
-	hud.show_message("IT HAS YOU. Get to a lit room, or drop a flare.")
-	Game.set_warning("IT IS ON YOUR BACK. Reach a lit room, or drop a flare with Q.")
+	hud.show_message("IT HAS YOU. Reach the security office, or drop a flare.")
+	Game.set_warning("IT IS ON YOUR BACK. Reach the office, or drop a flare with Q.")
 	Game.add_log_entry("The Warden latched on.")
 	hud.set_danger(true)
 
@@ -1142,6 +1481,11 @@ func _tick_warden(delta: float) -> void:
 		return
 	# Riding the guard burns the cell as well as the nerve.
 	player.battery = maxf(0.0, player.battery - 0.02 * delta)
+	# A live countdown. The latch has always had a time limit, but the guard had
+	# no way to see it, so being grabbed read as a death sentence rather than a
+	# thirteen-second window with two ways out of it.
+	var left := maxi(0, int(ceil(WardenEntity.LATCH_LIMIT - warden.latch_progress())))
+	Game.set_warning("IT IS ON YOUR BACK - %d. Reach the office, or drop a flare with Q." % left)
 	if _player_in_safe_room():
 		warden.release()
 		return
@@ -1156,6 +1500,7 @@ func _spawn_anomaly(stop: Dictionary) -> void:
 	var cell: Vector2i = spots[randi() % spots.size()]
 	active_anomaly = ANOMALY_SCENE.instantiate()
 	active_anomaly.position = Vector2(cell.x * TILE + TILE * 0.5, cell.y * TILE + TILE * 0.5)
+	duty_point = active_anomaly.position
 	active_anomaly.setup(stop["tex"], stop["msg"], stop["glow"])
 	active_anomaly.logged.connect(_on_anomaly_logged)
 	objects.add_child.call_deferred(active_anomaly)

@@ -383,7 +383,7 @@ func _draw_breakers(panel: Rect2) -> void:
 
 
 func _draw_codes(panel: Rect2) -> void:
-	_draw_text("MEMORISE THE CODE. THEN KEY IT IN.", panel.position + Vector2(16, 52), 13,
+	_draw_text("MEMORIZE THE CODE. THEN KEY IT IN.", panel.position + Vector2(16, 52), 13,
 		Color(0.78, 0.83, 0.9))
 
 	# One line serves both jobs: the code while it is showing, then your progress.

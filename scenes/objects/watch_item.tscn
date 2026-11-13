@@ -1,0 +1,21 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/objects/watch_item.gd" id="1_watch"]
+[ext_resource type="Texture2D" path="res://assets/generated/light_glow.png" id="2_glow"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_watch"]
+size = Vector2(48, 40)
+
+[node name="WatchItem" type="Area2D"]
+script = ExtResource("1_watch")
+
+[node name="Sprite" type="Sprite2D" parent="."]
+
+[node name="Glow" type="PointLight2D" parent="."]
+texture = ExtResource("2_glow")
+texture_scale = 1.0
+energy = 0.8
+color = Color(1, 0.86, 0.5, 1)
+
+[node name="Shape" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_watch")
